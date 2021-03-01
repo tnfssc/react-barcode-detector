@@ -1,29 +1,40 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import jsQR from 'jsqr'
+import React, { useCallback, useEffect, useRef } from 'react'
 // eslint-disable-next-line
 import { Point } from 'jsqr/dist/locator'
+// eslint-disable-next-line
+import jsQR, { QRCode } from 'jsqr'
+
+export type ValidFreq = 100 | 200 | 300 | 400 | 500
+export const validFreq = [100, 200, 300, 400, 500]
 
 export interface BarDetectProps {
   width?: number
   height?: number
-  freq?: 100 | 200 | 300 | 400 | 500
+  rageMode?: boolean
+  freq?: ValidFreq
   off?: false
   videoStyle?: React.CSSProperties
+  onDetect?: (data: string) => void
+  onError?: (e: unknown) => void
+  onProcess?: (code: QRCode | null) => void
   [key: string]: any
 }
 
-const BarDetect = ({
+export const BarDetect = ({
   width,
   height,
   off = false,
   freq = 200,
   videoStyle,
+  rageMode = false,
+  onDetect = console.log,
+  onError = console.error,
+  onProcess,
   ...props
 }: BarDetectProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [update, setUpdate] = useState(0)
-  const updateIt = () => setUpdate((prevState) => prevState + 1)
+  const rageRef = useRef(rageMode)
 
   const tick = useCallback(() => {
     if (off) return
@@ -43,7 +54,6 @@ const BarDetect = ({
         context.strokeStyle = color
         context.stroke()
       }
-      console.log(videoRef.current.videoHeight)
       canvasRef.current.height = videoRef.current.videoHeight
       canvasRef.current.width = videoRef.current.videoWidth
       context.drawImage(
@@ -62,6 +72,7 @@ const BarDetect = ({
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: 'dontInvert'
       })
+      if (onProcess) return onProcess(code)
       if (code) {
         drawLine(
           code.location.topLeftCorner,
@@ -83,11 +94,11 @@ const BarDetect = ({
           code.location.topLeftCorner,
           '#FF3B58'
         )
-        console.log(code.data)
+        onDetect(code.data)
       }
     }
-  }, [])
-  useEffect(tick, [update])
+    if (rageRef.current) requestAnimationFrame(tick)
+  }, [rageMode])
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({
@@ -103,13 +114,24 @@ const BarDetect = ({
         if (videoRef.current) videoRef.current.srcObject = stream
       })
       .catch((error: unknown) => {
-        console.error(error)
+        onError(error)
       })
   }, [])
   useEffect(() => {
-    const interval = setInterval(updateIt, freq)
-    return () => clearInterval(interval)
-  }, [freq])
+    rageRef.current = rageMode
+    if (rageRef.current) {
+      const animation = requestAnimationFrame(tick)
+      return () => cancelAnimationFrame(animation)
+    }
+    let animation: number
+    const interval = setInterval(() => {
+      animation = requestAnimationFrame(tick)
+    }, freq)
+    return () => {
+      clearInterval(interval)
+      cancelAnimationFrame(animation)
+    }
+  }, [freq, rageMode])
   return (
     <div {...props}>
       <video
@@ -125,5 +147,3 @@ const BarDetect = ({
     </div>
   )
 }
-
-export default BarDetect
