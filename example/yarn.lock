@@ -2448,6 +2448,11 @@ balanced-match@^1.0.0:
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.0.tgz#89b4d199ab2bee49de164ea02b89ce462d71b767"
   integrity sha1-ibTRmasr7kneFk6gK4nORi1xt2c=
 
+barcode-detector-polyfill@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/barcode-detector-polyfill/-/barcode-detector-polyfill-0.1.2.tgz#15c52b409c7d05f73f77d97505a3450892d88d42"
+  integrity sha1-FcUrQJx9Bfc/d9l1BaNFCJLYjUI=
+
 base64-js@^1.0.2:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.5.1.tgz#1b1b440160a5bf7ad40b650f095963481903930a"
